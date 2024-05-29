@@ -1,6 +1,7 @@
 from random import randrange
 import time
 import zmq
+import logging
 
 TOPIC = 'TEMPERATURE'
 
