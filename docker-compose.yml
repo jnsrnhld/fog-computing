@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  usage-sensor:
+    build:
+      context: ./sensors/usage
+  temperature-sensor:
+    build:
+      context: ./sensors/temperature
