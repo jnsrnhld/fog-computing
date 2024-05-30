@@ -5,6 +5,8 @@ import logging
 
 TOPIC = 'USAGE'
 
+logging.basicConfig(level = logging.INFO)
+
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
 socket.bind("tcp://*:5555")

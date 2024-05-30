@@ -5,6 +5,8 @@ import logging
 
 TOPIC = 'TEMPERATURE'
 
+logging.basicConfig(level = logging.INFO)
+
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
 socket.bind("tcp://*:5556")
