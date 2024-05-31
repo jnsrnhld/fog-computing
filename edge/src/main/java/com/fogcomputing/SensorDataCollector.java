@@ -29,7 +29,7 @@ public class SensorDataCollector implements Runnable {
 			temperatureSub.connect("tcp://*:%s".formatted(TEMPERATURE_TOPIC_PORT));
 			temperatureSub.subscribe(TEMPERATURE_TOPIC.getBytes());
 
-			while (true) {
+			while (!Thread.currentThread().isInterrupted()) {
 				String usageData = usageSub.recvStr().substring(USAGE_TOPIC.length() + 1);
 				String temperatureData = temperatureSub.recvStr().substring(TEMPERATURE_TOPIC.length() + 1);
 				messagebuffer.offer(new SensorData(usageData, temperatureData));

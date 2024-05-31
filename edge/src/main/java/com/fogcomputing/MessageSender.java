@@ -26,7 +26,7 @@ public class MessageSender implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
+		while (!Thread.currentThread().isInterrupted()) {
 
 			if (!deadLetterBuffer.isEmpty()) {
 				deadLetterBuffer.stream().filter(this::trySendToCloud).forEach(deadLetterBuffer::remove);
