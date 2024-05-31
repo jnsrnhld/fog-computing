@@ -1,8 +1,12 @@
 version: '3.9'
 services:
   usage-sensor:
+    ports:
+      - "5555:5555"
     build:
       context: ./sensors/usage
   temperature-sensor:
+    ports:
+      - "5556:5556"
     build:
       context: ./sensors/temperature

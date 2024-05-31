@@ -1,2 +1,4 @@
-/myenv
+*/venv
+edge/target/*
+.idea
 .DS_Store

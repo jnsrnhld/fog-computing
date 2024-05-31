@@ -1,29 +1,31 @@
-package edge.src.main.java.com.fogcomputing;
+package com.fogcomputing;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
 public class Main {
-    public static void main(String[] args) throws Exception
-    {
-        try (ZContext context = new ZContext()) {
-            // Socket to talk to clients
-            ZMQ.Socket socket = context.createSocket(SocketType.REP);
-            socket.bind("tcp://*:5555");
 
-            while (!Thread.currentThread().isInterrupted()) {
-                // Block until a message is received
-                byte[] reply = socket.recv(0);
+	private static final String USAGE_TOPIC = "USAGE";
+	private static final String TEMPERATURE_TOPIC = "TEMPERATURE";
 
-                // Print the message
-                System.out.println(
-                    "Received: [" + new String(reply, ZMQ.CHARSET) + "]"
-                );
+	public static void main(String[] args) {
+		try (ZContext context = new ZContext()) {
 
-                // Send a response
-                String response = "Hello, world!";
-                socket.send(response.getBytes(ZMQ.CHARSET), 0);
-            }
-        }
-    }
+			ZMQ.Socket usageSub = context.createSocket(SocketType.SUB);
+			usageSub.connect("tcp://*:5555");
+			usageSub.subscribe(USAGE_TOPIC.getBytes());
+
+			ZMQ.Socket temperatureSub = context.createSocket(SocketType.SUB);
+			temperatureSub.connect("tcp://*:5556");
+			temperatureSub.subscribe(TEMPERATURE_TOPIC.getBytes());
+
+			while (true) {
+				String usageData = usageSub.recvStr();
+				String temperatureData = temperatureSub.recvStr();
+				System.out.println(usageData);
+				System.out.println(temperatureData);
+			}
+		}
+	}
+}
