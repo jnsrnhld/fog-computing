@@ -12,7 +12,7 @@ public class EdgeService {
 		ExecutorService executor = Executors.newFixedThreadPool(3);
 
 		// using String and not a custom object for a first draft
-		ConcurrentLinkedQueue<String> outboundMessages = new ConcurrentLinkedQueue<>();
+		ConcurrentLinkedQueue<SensorData> outboundMessages = new ConcurrentLinkedQueue<>();
 
 		SensorDataCollector sensorDataCollector = new SensorDataCollector(outboundMessages);
 		executor.submit(sensorDataCollector);

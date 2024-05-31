@@ -7,14 +7,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MessageSender implements Runnable {
 
-	private final ConcurrentLinkedQueue<String> outboundMessages;
+	private final ConcurrentLinkedQueue<SensorData> outboundMessages;
 
 	@Override
 	public void run() {
 		while (true) {
 			while (outboundMessages.peek() != null) {
-				String message = outboundMessages.poll();
-				System.out.println("Read message from queue: " + message);
+				SensorData sensorData = outboundMessages.poll();
+				System.out.println("Read message from queue: " + sensorData);
 				// TODO send message to Cloud service
 			}
 		}
