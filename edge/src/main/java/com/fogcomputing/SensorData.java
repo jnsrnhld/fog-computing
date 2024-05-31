@@ -11,6 +11,6 @@ public record SensorData(
 
 	@Override
 	public String toString() {
-		return "Temperature: " + temperature + ", Usage: " + usage;
+		return "[%s,%s]".formatted(temperature, usage);
 	}
 }
