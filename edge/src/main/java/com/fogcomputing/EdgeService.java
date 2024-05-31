@@ -4,7 +4,7 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
-public class Main {
+public class EdgeService {
 
 	private static final String USAGE_TOPIC = "USAGE";
 	private static final String TEMPERATURE_TOPIC = "TEMPERATURE";
