@@ -1,8 +1,6 @@
 package com.fogcomputing;
 
-import java.sql.Date;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -28,7 +26,7 @@ public class MessageSender implements Runnable {
 				batch.add(sensorData);
 			}
 
-			Timestamp currentDateTime = new Timestamp(Date.valueOf(LocalDate.now()).getTime());
+			Timestamp currentDateTime = new Timestamp(System.currentTimeMillis());
 			SensorDataBatch sensorDataBatch = new SensorDataBatch(batch, currentDateTime);
 			System.out.printf("Batch ready to sent: %s\n", sensorDataBatch);
 			// TODO send sensorDataBatch to Cloud service
