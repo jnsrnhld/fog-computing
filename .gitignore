@@ -1,4 +1,4 @@
 */venv
-edge/target/*
+*/target/*
 .idea
 .DS_Store
