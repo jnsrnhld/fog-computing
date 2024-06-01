@@ -43,7 +43,7 @@ public class EdgeService implements Callable<Void> {
 			boolean connected = false;
 			while (!connected) {
 				connected = cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
-				System.out.println("Was not able to connect to cloud server %s...");
+				System.out.printf("Was not able to connect to cloud server on %s...%n", cloudServerAddress);
 				ThreadUtils.sleep(5, TimeUnit.SECONDS);
 			}
 			MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
