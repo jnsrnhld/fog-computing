@@ -29,9 +29,7 @@ public class EdgeService implements Callable<Void> {
 		ConcurrentLinkedQueue<SensorData> messageBuffer = new ConcurrentLinkedQueue<>();
 
 		startSensordataCollector(messageBuffer, executor);
-
-		ZMQ.Socket messageSender = startMessageSender(messageBuffer, executor);
-		registerShutdownHook(messageSender::close);
+		startMessageSender(messageBuffer, executor);
 
 //		ZMQ.Socket messageReceiver = startMessageReceiver(executor);
 //		registerShutdownHook(messageReceiver::close);
@@ -45,7 +43,7 @@ public class EdgeService implements Callable<Void> {
 		executor.submit(sensorDataCollector);
 	}
 
-	private ZMQ.Socket startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
+	private void startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
 		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ);
 		boolean connected = false;
 		while (!connected) {
@@ -55,10 +53,9 @@ public class EdgeService implements Callable<Void> {
 		}
 		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
 		executor.submit(messageSender);
-		return cloudSocket;
 	}
 
-	private ZMQ.Socket startMessageReceiver(ExecutorService executor) {
+	private void startMessageReceiver(ExecutorService executor) {
 		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REP);
 		boolean connected = false;
 		while (!connected) {
@@ -68,7 +65,6 @@ public class EdgeService implements Callable<Void> {
 		}
 		MessageReceiver messageReceiver = new MessageReceiver(cloudSocket);
 		executor.submit(messageReceiver);
-		return cloudSocket;
 	}
 
 	public static void main(String[] args) {
