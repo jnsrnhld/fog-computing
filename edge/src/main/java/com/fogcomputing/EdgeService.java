@@ -10,6 +10,7 @@ public class EdgeService {
 
 	public static void main(String[] args) {
 
+		registerShutdownHook(); // close ZContext during shutdown
 		ExecutorService executor = Executors.newFixedThreadPool(3); // assuming we need 3 threads in total
 		ConcurrentLinkedQueue<SensorData> messageBuffer = new ConcurrentLinkedQueue<>();
 
@@ -19,6 +20,11 @@ public class EdgeService {
 		ZMQ.Socket cloudSocket = null; // just a dummy for now
 		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
 		executor.submit(messageSender);
+	}
+
+	private static void registerShutdownHook() {
+		Thread printingHook = new Thread(ZContextProvider::close);
+		Runtime.getRuntime().addShutdownHook(printingHook);
 	}
 
 }

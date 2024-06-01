@@ -10,8 +10,8 @@ import org.zeromq.ZMQ;
 @RequiredArgsConstructor
 public class SensorDataCollector implements Runnable {
 
-	private static final String USAGE_TOPIC_PORT = "5555";
-	private static final String TEMPERATURE_TOPIC_PORT = "5556";
+	private static final int USAGE_TOPIC_PORT = 5555;
+	private static final int TEMPERATURE_TOPIC_PORT = 5556;
 	private static final String USAGE_TOPIC = "USAGE";
 	private static final String TEMPERATURE_TOPIC = "TEMPERATURE";
 
@@ -19,21 +19,23 @@ public class SensorDataCollector implements Runnable {
 
 	@Override
 	public void run() {
-		try (ZContext context = new ZContext()) {
-
-			ZMQ.Socket usageSub = context.createSocket(SocketType.SUB);
-			usageSub.connect("tcp://*:%s".formatted(USAGE_TOPIC_PORT));
-			usageSub.subscribe(USAGE_TOPIC.getBytes());
-
-			ZMQ.Socket temperatureSub = context.createSocket(SocketType.SUB);
-			temperatureSub.connect("tcp://*:%s".formatted(TEMPERATURE_TOPIC_PORT));
-			temperatureSub.subscribe(TEMPERATURE_TOPIC.getBytes());
-
+		try (ZMQ.Socket usageSub = createSubscriber(USAGE_TOPIC_PORT, USAGE_TOPIC);
+			 ZMQ.Socket temperatureSub = createSubscriber(TEMPERATURE_TOPIC_PORT, TEMPERATURE_TOPIC);)
+		{
 			while (!Thread.currentThread().isInterrupted()) {
+				// we do sync read of both sensors
 				String usageData = usageSub.recvStr().substring(USAGE_TOPIC.length() + 1);
 				String temperatureData = temperatureSub.recvStr().substring(TEMPERATURE_TOPIC.length() + 1);
 				messagebuffer.offer(new SensorData(usageData, temperatureData));
 			}
 		}
+	}
+
+	private static ZMQ.Socket createSubscriber(int port, String topic) {
+		ZContext context = ZContextProvider.getInstance();
+		ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
+		subscriber.connect("tcp://*:%d".formatted(port));
+		subscriber.subscribe(topic.getBytes());
+		return subscriber;
 	}
 }
