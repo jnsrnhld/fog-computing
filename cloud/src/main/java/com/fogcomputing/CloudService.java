@@ -25,9 +25,10 @@ public class CloudService implements Callable<Void> {
 			System.out.printf("Cloud service listening on port %s...%n", cloudServicePort);
 
 			while (!Thread.currentThread().isInterrupted()) {
-				//  Wait for next request from client
-				String string = responder.recvStr(0);
-				System.out.printf("Received request: [%s]\n", string);
+				//  Wait for next message from client
+				byte[] message = responder.recv(0);
+				SensorDataBatch sensorDataBatch = SensorDataBatch.deserialize(message);
+				System.out.printf("Received sensor data: [%s]\n", sensorDataBatch);
 				responder.send("OK");
 			}
 		}

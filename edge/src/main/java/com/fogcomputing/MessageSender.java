@@ -1,7 +1,5 @@
 package com.fogcomputing;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,15 +53,11 @@ public class MessageSender implements Runnable {
 	}
 
 	private boolean trySendToCloud(SensorDataBatch sensorDataBatch) {
-		try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			 ObjectOutputStream oos = new ObjectOutputStream(bos))
-		{
+		try {
 			int tries = 0;
 			while (tries < 3) {
 				tries++;
-				// for now, I'm sending strings and skip serialization
-				oos.writeObject(sensorDataBatch);
-				cloudSocket.send(sensorDataBatch.toString());
+				cloudSocket.send(sensorDataBatch.serialize());
 				poller.poll();
 				if (poller.pollin(0)) {
 					String response = cloudSocket.recvStr();
