@@ -21,7 +21,7 @@ public class MessageSender implements Runnable {
 	private final ZMQ.Poller poller;
 
 	public MessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ZMQ.Socket cloudSocket) {
-		if ( cloudSocket.getSocketType() != SocketType.REQ) {
+		if (cloudSocket.getSocketType() != SocketType.REQ) {
 			throw new IllegalArgumentException("Invalid socket type: %s. Expecting SocketType.REQ".formatted(cloudSocket.getSocketType()));
 		}
 		this.messageBuffer = messageBuffer;

@@ -2,6 +2,7 @@ package com.fogcomputing;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +12,8 @@ import org.zeromq.ZMQ;
 import picocli.CommandLine;
 
 public class EdgeService implements Callable<Void> {
+
+	private final CountDownLatch latch = new CountDownLatch(1);
 
 	@CommandLine.Parameters(index = "0", description = "Please provide a cloud server address")
 	private String cloudServerAddress;
@@ -29,6 +32,7 @@ public class EdgeService implements Callable<Void> {
 		startMessageSender(messageBuffer, executor);
 //		startMessageReceiver(executor);
 
+		latch.await(); // keep the main thread alive
 		return null;
 	}
 
