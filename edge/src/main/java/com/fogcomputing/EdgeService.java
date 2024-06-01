@@ -24,13 +24,17 @@ public class EdgeService implements Callable<Void> {
 	@Override
 	public Void call() throws Exception {
 
-		registerShutdownHook(); // close ZContext during shutdown
+		registerShutdownHook(ZContextProvider::close); // close ZContext during shutdown
 		ExecutorService executor = Executors.newFixedThreadPool(3); // assuming we need 3 threads in total
 		ConcurrentLinkedQueue<SensorData> messageBuffer = new ConcurrentLinkedQueue<>();
 
 		startSensordataCollector(messageBuffer, executor);
-		startMessageSender(messageBuffer, executor);
-//		startMessageReceiver(executor);
+
+		ZMQ.Socket messageSender = startMessageSender(messageBuffer, executor);
+		registerShutdownHook(messageSender::close);
+
+//		ZMQ.Socket messageReceiver = startMessageReceiver(executor);
+//		registerShutdownHook(messageReceiver::close);
 
 		latch.await(); // keep the main thread alive
 		return null;
@@ -41,32 +45,30 @@ public class EdgeService implements Callable<Void> {
 		executor.submit(sensorDataCollector);
 	}
 
-	private void startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
-		try (ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ))
-		{
-			boolean connected = false;
-			while (!connected) {
-				connected = cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
-				System.out.printf("Was not able to connect to cloud server on %s...%n", cloudServerAddress);
-				ThreadUtils.sleep(5, TimeUnit.SECONDS);
-			}
-			MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
-			executor.submit(messageSender);
+	private ZMQ.Socket startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
+		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ);
+		boolean connected = false;
+		while (!connected) {
+			connected = cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
+			System.out.printf("Was not able to connect to cloud server on %s...%n", cloudServerAddress);
+			ThreadUtils.sleep(5, TimeUnit.SECONDS);
 		}
+		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
+		executor.submit(messageSender);
+		return cloudSocket;
 	}
 
-	private void startMessageReceiver(ExecutorService executor) {
-		try (ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REP))
-		{
-			boolean connected = false;
-			while (!connected) {
-				connected = cloudSocket.connect("tcp://localhost:%s".formatted(edgeServicePort));
-				System.out.println("Was not able to start message receiver on localhost port %s...");
-				ThreadUtils.sleep(5, TimeUnit.SECONDS);
-			}
-			MessageReceiver messageReceiver = new MessageReceiver(cloudSocket);
-			executor.submit(messageReceiver);
+	private ZMQ.Socket startMessageReceiver(ExecutorService executor) {
+		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REP);
+		boolean connected = false;
+		while (!connected) {
+			connected = cloudSocket.connect("tcp://localhost:%s".formatted(edgeServicePort));
+			System.out.println("Was not able to start message receiver on localhost port %s...");
+			ThreadUtils.sleep(5, TimeUnit.SECONDS);
 		}
+		MessageReceiver messageReceiver = new MessageReceiver(cloudSocket);
+		executor.submit(messageReceiver);
+		return cloudSocket;
 	}
 
 	public static void main(String[] args) {
@@ -74,8 +76,8 @@ public class EdgeService implements Callable<Void> {
 		System.exit(exitCode);
 	}
 
-	private static void registerShutdownHook() {
-		Thread printingHook = new Thread(ZContextProvider::close);
+	private static void registerShutdownHook(Runnable runnable) {
+		Thread printingHook = new Thread(runnable);
 		Runtime.getRuntime().addShutdownHook(printingHook);
 	}
 }

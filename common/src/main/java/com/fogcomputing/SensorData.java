@@ -1,12 +1,16 @@
 package com.fogcomputing;
 
 
+import java.io.Serializable;
+
 public record SensorData(
 		int temperature,
 		int usage
-) {
+)
+		implements Serializable
+{
 	public SensorData(String temperature, String usage) {
-		 this(Integer.parseInt(temperature), Integer.parseInt(usage));
+		this(Integer.parseInt(temperature), Integer.parseInt(usage));
 	}
 
 	@Override
