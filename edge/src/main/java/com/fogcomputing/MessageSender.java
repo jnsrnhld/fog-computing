@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 
 public class MessageSender implements Runnable {
@@ -15,13 +16,19 @@ public class MessageSender implements Runnable {
 	private static final int DEFAULT_BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
 
 	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
-	private final ZMQ.Socket cloudSocket;
 	private final List<SensorDataBatch> deadLetterBuffer;
+	private final ZMQ.Socket cloudSocket;
+	private final ZMQ.Poller poller;
 
 	public MessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ZMQ.Socket cloudSocket) {
+		if ( cloudSocket.getSocketType() != SocketType.REQ) {
+			throw new IllegalArgumentException("Invalid socket type: %s. Expecting SocketType.REQ".formatted(cloudSocket.getSocketType()));
+		}
 		this.messageBuffer = messageBuffer;
-		this.cloudSocket = cloudSocket;
 		this.deadLetterBuffer = new ArrayList<>();
+		this.cloudSocket = cloudSocket;
+		this.poller = ZContextProvider.getInstance().createPoller(1);
+		this.poller.register(cloudSocket);
 	}
 
 	@Override
@@ -51,9 +58,22 @@ public class MessageSender implements Runnable {
 		try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			 ObjectOutputStream oos = new ObjectOutputStream(bos))
 		{
-			oos.writeObject(sensorDataBatch);
-			cloudSocket.send(bos.toByteArray());
-			return true;
+			int tries = 0;
+			while (tries < 3) {
+				tries++;
+				// for now, I'm sending strings and skip serialization
+				oos.writeObject(sensorDataBatch);
+				cloudSocket.send(sensorDataBatch.toString());
+				poller.poll();
+				if (poller.pollin(0)) {
+					String response = cloudSocket.recvStr();
+					System.out.println("Got response from cloud server: " + response);
+					return true;
+				}
+				ThreadUtils.sleep(1, TimeUnit.SECONDS);
+			}
+			deadLetterBuffer.add(sensorDataBatch);
+			return false;
 		}
 		catch (Exception e) {
 			System.err.println("Error sending message: " + e.getMessage());

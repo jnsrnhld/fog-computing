@@ -15,7 +15,7 @@ public class SensorDataCollector implements Runnable {
 	private static final String USAGE_TOPIC = "USAGE";
 	private static final String TEMPERATURE_TOPIC = "TEMPERATURE";
 
-	private final ConcurrentLinkedQueue<SensorData> messagebuffer;
+	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
 
 	@Override
 	public void run() {
@@ -26,7 +26,7 @@ public class SensorDataCollector implements Runnable {
 				// we do sync read of both sensors
 				String usageData = usageSub.recvStr().substring(USAGE_TOPIC.length() + 1);
 				String temperatureData = temperatureSub.recvStr().substring(TEMPERATURE_TOPIC.length() + 1);
-				messagebuffer.offer(new SensorData(usageData, temperatureData));
+				messageBuffer.offer(new SensorData(usageData, temperatureData));
 			}
 		}
 	}
