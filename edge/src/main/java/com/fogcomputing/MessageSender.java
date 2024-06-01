@@ -12,6 +12,7 @@ import org.zeromq.ZMQ;
 public class MessageSender implements Runnable {
 
 	private static final int DEFAULT_BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
+	private static final int POLLING_TIMEOUT = 100;
 
 	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
 	private final List<SensorDataBatch> deadLetterBuffer;
@@ -58,7 +59,7 @@ public class MessageSender implements Runnable {
 			while (tries < 3) {
 				tries++;
 				cloudSocket.send(sensorDataBatch.serialize());
-				poller.poll();
+				poller.poll(POLLING_TIMEOUT);
 				if (poller.pollin(0)) {
 					String response = cloudSocket.recvStr();
 					System.out.println("Got response from cloud server: " + response);
