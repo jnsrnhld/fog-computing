@@ -1,5 +1,6 @@
 package com.fogcomputing;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,11 +9,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 public class MessageSender implements Runnable {
 
 	private static final int DEFAULT_BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
-	private static final int POLLING_TIMEOUT = 100;
+	private static final int POLLING_TIMEOUT = 1000;
+	private static final int MAX_TRIES = 3;
 
 	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
 	private final List<SensorDataBatch> deadLetterBuffer;
@@ -56,7 +59,7 @@ public class MessageSender implements Runnable {
 	private boolean trySendToCloud(SensorDataBatch sensorDataBatch) {
 		try {
 			int tries = 0;
-			while (tries < 3) {
+			while (tries < MAX_TRIES) {
 				tries++;
 				cloudSocket.send(sensorDataBatch.serialize());
 				poller.poll(POLLING_TIMEOUT);
@@ -65,16 +68,22 @@ public class MessageSender implements Runnable {
 					System.out.println("Got response from cloud server: " + response);
 					return true;
 				}
-				ThreadUtils.sleep(1, TimeUnit.SECONDS);
 			}
-			deadLetterBuffer.add(sensorDataBatch);
-			return false;
+			return handleFailedSend(sensorDataBatch);
 		}
-		catch (Exception e) {
-			System.err.println("Error sending message: " + e.getMessage());
-			deadLetterBuffer.add(sensorDataBatch);
-			return false;
+		catch (IOException e) {
+			System.err.printf("Error sending message: %s. Possibly due to a serialization error?%n", e.getMessage());
+			return handleFailedSend(sensorDataBatch);
 		}
+		catch (ZMQException e) {
+			System.err.printf("Error sending message: %s. Probably server did not respond within %d tries...", e.getMessage(), MAX_TRIES);
+			return handleFailedSend(sensorDataBatch);
+		}
+	}
+
+	private boolean handleFailedSend(SensorDataBatch sensorDataBatch) {
+		deadLetterBuffer.add(sensorDataBatch);
+		return false;
 	}
 
 }
