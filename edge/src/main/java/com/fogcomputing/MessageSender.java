@@ -49,7 +49,6 @@ public class MessageSender implements Runnable {
 
 			Timestamp currentDateTime = new Timestamp(System.currentTimeMillis());
 			SensorDataBatch sensorDataBatch = new SensorDataBatch(batch, currentDateTime);
-			System.out.printf("Trying to sent batch: %s\n", sensorDataBatch);
 			trySendToCloud(sensorDataBatch);
 
 			ThreadUtils.sleep(15, TimeUnit.SECONDS);
@@ -57,6 +56,7 @@ public class MessageSender implements Runnable {
 	}
 
 	private boolean trySendToCloud(SensorDataBatch sensorDataBatch) {
+		System.out.printf("Trying to sent batch: %s\n", sensorDataBatch);
 		try {
 			int tries = 0;
 			while (tries < MAX_TRIES) {

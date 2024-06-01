@@ -5,7 +5,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
@@ -41,17 +40,9 @@ public class EdgeService implements Callable<Void> {
 	}
 
 	private void startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
-
 		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ);
 		registerShutdownHook(cloudSocket::close);
-
-		boolean connected = false;
-		while (!connected) {
-			connected = cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
-			System.out.printf("Was not able to connect to cloud server on %s...%n", cloudServerAddress);
-			ThreadUtils.sleep(5, TimeUnit.SECONDS);
-		}
-
+		cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
 		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
 		executor.submit(messageSender);
 	}
