@@ -18,7 +18,7 @@ public class CloudService implements Callable<Void> {
 
 			boolean connected = false;
 			while (!connected) {
-				connected = responder.connect("tcp://localhost:%s".formatted(cloudServicePort));
+				connected = responder.bind("tcp://localhost:%s".formatted(cloudServicePort));
 				System.out.printf("Was not able to init cloud service on port %s...%n", cloudServicePort);
 				ThreadUtils.sleep(5, TimeUnit.SECONDS);
 			}
