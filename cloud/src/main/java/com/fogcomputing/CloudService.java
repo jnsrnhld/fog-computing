@@ -1,38 +1,45 @@
 package com.fogcomputing;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
 import picocli.CommandLine;
 
 public class CloudService implements Callable<Void> {
+
+	private final CountDownLatch latch = new CountDownLatch(1);
 
 	@CommandLine.Option(names = {"--port", "-p"}, description = "Port this CloudService listens to", defaultValue = "8080")
 	private int cloudServicePort;
 
 	@Override
-	public Void call() throws Exception {
-		try (ZMQ.Socket responder = ZContextProvider.getInstance().createSocket(SocketType.REP)) {
+	public Void call() throws InterruptedException {
 
-			boolean connected = false;
-			while (!connected) {
-				connected = responder.bind("tcp://localhost:%s".formatted(cloudServicePort));
-				System.out.printf("Was not able to init cloud service on port %s...%n", cloudServicePort);
-				ThreadUtils.sleep(5, TimeUnit.SECONDS);
-			}
-			System.out.printf("Cloud service listening on port %s...%n", cloudServicePort);
+		ExecutorService executor = Executors.newFixedThreadPool(2); // assuming we need 2 threads in total
+		startSensorDataServer(executor);
 
-			while (!Thread.currentThread().isInterrupted()) {
-				//  Wait for next message from client
-				byte[] message = responder.recv(0);
+		latch.await(); // keep the main thread alive
+		return null;
+	}
+
+	private void startSensorDataServer(ExecutorService executor) {
+		Server sensorDataServer = new Server(cloudServicePort, SocketType.REP, (message) -> {
+			try {
 				SensorDataBatch sensorDataBatch = Message.deserialize(message, SensorDataBatch.class);
 				System.out.printf("Received sensor data: [%s]\n", sensorDataBatch);
-				responder.send("OK");
+				return "OK";
 			}
-		}
-		return null;
+			catch (IOException | ClassNotFoundException e) {
+				System.out.println("Error receiving sensor data: " + e.getMessage());
+				return "ERR";
+			}
+		});
+		ThreadUtils.registerShutdownHook(sensorDataServer::close);
+		executor.submit(sensorDataServer);
 	}
 
 	public static void main (String[]args){
