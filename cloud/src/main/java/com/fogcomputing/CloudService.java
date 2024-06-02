@@ -31,12 +31,16 @@ public class CloudService implements Callable<Void> {
 			try {
 				SensorDataBatch sensorDataBatch = Message.deserialize(message, SensorDataBatch.class);
 				System.out.printf("Received sensor data: [%s]\n", sensorDataBatch);
-				return "OK";
+				SensorDataAggregation aggregatedSensorData = sensorDataBatch.aggregate();
+				System.out.printf("Answering with aggregated data: [%s]\n", aggregatedSensorData);
+				return aggregatedSensorData;
 			}
 			catch (IOException | ClassNotFoundException e) {
-				System.out.println("Error receiving sensor data: " + e.getMessage());
-				return "ERR";
+				System.err.println("Interval server error processing sensor data");
+				System.exit(1);
 			}
+			// unreachable
+			return null;
 		});
 		ThreadUtils.registerShutdownHook(sensorDataServer::close);
 		executor.submit(sensorDataServer);

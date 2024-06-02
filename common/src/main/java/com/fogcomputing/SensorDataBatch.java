@@ -8,8 +8,7 @@ public record SensorDataBatch(
 		int size,
 		Timestamp timestamp
 )
-		implements Message
-{
+		implements Message {
 	public SensorDataBatch(List<SensorData> sensorData, Timestamp timestamp) {
 		this(sensorData, sensorData.size(), timestamp);
 	}
@@ -19,4 +18,17 @@ public record SensorDataBatch(
 		return "SensorDataBatch: size = %s, data[Temp,Usage] = %s, timestamp = %s".formatted(size, sensorData, timestamp);
 	}
 
+	public SensorDataAggregation aggregate() {
+
+		double averageTemperature = sensorData.stream()
+											  .mapToInt(SensorData::temperature)
+											  .average()
+											  .orElse(0);
+		double averageUsage = sensorData.stream()
+										.mapToInt(SensorData::usage)
+										.average()
+										.orElse(0);
+
+		return new SensorDataAggregation((int) averageTemperature, (int) averageUsage, timestamp);
+	}
 }

@@ -1,5 +1,6 @@
 package com.fogcomputing;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +31,21 @@ public class MessageSender implements Runnable {
 
 			Timestamp currentDateTime = new Timestamp(System.currentTimeMillis());
 			SensorDataBatch sensorDataBatch = new SensorDataBatch(batch, currentDateTime);
-			client.trySend(sensorDataBatch);
+			byte[] response = client.trySend(sensorDataBatch);
+			handleResponse(response);
 
 			ThreadUtils.sleep(15, TimeUnit.SECONDS);
+		}
+	}
+
+	private static void handleResponse(byte[] response) {
+		try {
+			SensorDataAggregation sensorDataAggregation = Message.deserialize(response, SensorDataAggregation.class);
+			System.out.printf("Received aggregated sensor data %s\n", sensorDataAggregation);
+		}
+		catch (IOException | ClassNotFoundException e) {
+			System.err.println("Interval error processing aggregated sensor data");
+			System.exit(1);
 		}
 	}
 
