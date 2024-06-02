@@ -1,5 +1,6 @@
 package com.fogcomputing;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 
-public class MessageSender implements Runnable {
+public class MessageSender implements Runnable, Closeable {
 
 	private static final int DEFAULT_BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
 	private static final int POLLING_TIMEOUT = 1000;
@@ -46,6 +47,13 @@ public class MessageSender implements Runnable {
 			ThreadUtils.sleep(15, TimeUnit.SECONDS);
 		}
 	}
+
+	@Override
+	public void close() {
+		poller.unregister(cloudSocket);
+		poller.close();
+		cloudSocket.close();
+	};
 
 	private void trySendToCloud(SensorDataBatch sensorDataBatch) {
 		try {

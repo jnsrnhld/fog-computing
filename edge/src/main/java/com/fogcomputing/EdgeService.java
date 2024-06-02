@@ -23,7 +23,7 @@ public class EdgeService implements Callable<Void> {
 	@Override
 	public Void call() throws Exception {
 
-		registerShutdownHook(ZContextProvider::close); // close ZContext during shutdown
+		ThreadUtils.registerShutdownHook(ZContextProvider::close); // close ZContext during shutdown
 		ExecutorService executor = Executors.newFixedThreadPool(3); // assuming we need 3 threads in total
 		ConcurrentLinkedQueue<SensorData> messageBuffer = new ConcurrentLinkedQueue<>();
 
@@ -41,9 +41,9 @@ public class EdgeService implements Callable<Void> {
 
 	private void startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
 		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ);
-		registerShutdownHook(cloudSocket::close);
 		cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
 		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
+		ThreadUtils.registerShutdownHook(messageSender::close);
 		executor.submit(messageSender);
 	}
 
@@ -52,8 +52,4 @@ public class EdgeService implements Callable<Void> {
 		System.exit(exitCode);
 	}
 
-	private static void registerShutdownHook(Runnable runnable) {
-		Thread printingHook = new Thread(runnable);
-		Runtime.getRuntime().addShutdownHook(printingHook);
-	}
 }

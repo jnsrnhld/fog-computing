@@ -14,4 +14,9 @@ public class ThreadUtils {
 		}
 	}
 
+	public static void registerShutdownHook(Runnable runnable) {
+		Thread printingHook = new Thread(runnable);
+		Runtime.getRuntime().addShutdownHook(printingHook);
+	}
+
 }
