@@ -27,7 +27,7 @@ public class CloudService implements Callable<Void> {
 			while (!Thread.currentThread().isInterrupted()) {
 				//  Wait for next message from client
 				byte[] message = responder.recv(0);
-				SensorDataBatch sensorDataBatch = SensorDataBatch.deserialize(message);
+				SensorDataBatch sensorDataBatch = Message.deserialize(message, SensorDataBatch.class);
 				System.out.printf("Received sensor data: [%s]\n", sensorDataBatch);
 				responder.send("OK");
 			}

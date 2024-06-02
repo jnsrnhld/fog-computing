@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
 import picocli.CommandLine;
 
 public class EdgeService implements Callable<Void> {
@@ -40,10 +39,9 @@ public class EdgeService implements Callable<Void> {
 	}
 
 	private void startMessageSender(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
-		ZMQ.Socket cloudSocket = ZContextProvider.getInstance().createSocket(SocketType.REQ);
-		cloudSocket.connect("tcp://%s".formatted(cloudServerAddress));
-		MessageSender messageSender = new MessageSender(messageBuffer, cloudSocket);
-		ThreadUtils.registerShutdownHook(messageSender::close);
+		Client client = new Client(cloudServerAddress, SocketType.REQ);
+		MessageSender messageSender = new MessageSender(messageBuffer, client);
+		ThreadUtils.registerShutdownHook(client::close);
 		executor.submit(messageSender);
 	}
 
