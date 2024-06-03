@@ -11,6 +11,6 @@ public record SensorDataAggregation(
 {
 	@Override
 	public String toString() {
-		return "[SensorDataAggregation %s [averageTemperature=%d, averageUsage=%d]]".formatted(timestamp, averageTemperature, averageUsage);
+		return "SensorDataAggregation %s [averageTemperature=%d, averageUsage=%d]".formatted(timestamp, averageTemperature, averageUsage);
 	}
 }

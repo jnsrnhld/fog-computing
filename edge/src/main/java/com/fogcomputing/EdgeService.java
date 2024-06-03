@@ -13,11 +13,8 @@ public class EdgeService implements Callable<Void> {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 
-	@CommandLine.Parameters(index = "0", description = "Please provide a cloud server address")
+	@CommandLine.Parameters(index = "0", description = "Please provide a cloud server address", defaultValue = "localhost:8080")
 	private String cloudServerAddress;
-
-	@CommandLine.Option(names = {"--port", "-p"}, description = "Port this EdgeService listens to", defaultValue = "8081")
-	private int edgeServicePort;
 
 	@Override
 	public Void call() throws Exception {
