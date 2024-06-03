@@ -1,6 +1,8 @@
 # Fog Computing
 
-This multi-module project is split up into 3 parts: 
+This multi-module project is split up into 4 parts:
+- `sensors` - To small python services producing data via a ZeroMQ PUB sockets. They can be started via `docker-compose` 
+and are exposed on ports `5555` (usage topic) and `5556` (temperature topic).
 - `edge` - a small service collecting data from 2 sensors via subscribing to a ZeroMQ PUB socket and sending over data 
 to the cloud service via a ZeroMQ REQ socket. Data is collected every second and send over to the cloud server every 15 
 seconds.
