@@ -1,5 +1,6 @@
 package com.fogcomputing;
 
+import java.sql.Timestamp;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,8 @@ public class SensorDataCollector implements Runnable {
 				// we do sync read of both sensors
 				String usageData = usageSub.recvStr().substring(USAGE_TOPIC.length() + 1);
 				String temperatureData = temperatureSub.recvStr().substring(TEMPERATURE_TOPIC.length() + 1);
-				messageBuffer.offer(new SensorData(usageData, temperatureData));
+				Timestamp dateTime = new Timestamp(System.currentTimeMillis());
+				messageBuffer.offer(new SensorData(usageData, temperatureData, dateTime));
 			}
 		}
 	}

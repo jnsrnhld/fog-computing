@@ -6,16 +6,37 @@ import java.util.List;
 public record SensorDataBatch(
 		List<SensorData> sensorData,
 		int size,
-		Timestamp timestamp
+		Timestamp first,
+		Timestamp last
+
 )
-		implements Message {
-	public SensorDataBatch(List<SensorData> sensorData, Timestamp timestamp) {
-		this(sensorData, sensorData.size(), timestamp);
+		implements Message
+{
+	public static SensorDataBatch of(List<SensorData> sensorData) {
+
+		Timestamp first;
+		Timestamp last;
+		if (sensorData.isEmpty()) {
+			Timestamp now = new Timestamp(System.currentTimeMillis());
+			first = now;
+			last = now;
+		}
+		else {
+			first = sensorData.get(0).dateTime();
+			last = sensorData.get(sensorData.size() - 1).dateTime();
+		}
+
+		return new SensorDataBatch(sensorData, sensorData.size(), first, last);
 	}
 
 	@Override
 	public String toString() {
-		return "SensorDataBatch: size = %s, data[Temp,Usage] = %s, timestamp = %s".formatted(size, sensorData, timestamp);
+		return "SensorDataBatch: size = %s, time range = [%s-%s] data[Temp,Usage] = %s".formatted(
+				size,
+				TimestampFormatter.timeOnly(first),
+				TimestampFormatter.timeOnly(last),
+				sensorData
+		);
 	}
 
 	public SensorDataAggregation aggregate() {
@@ -29,6 +50,6 @@ public record SensorDataBatch(
 										.average()
 										.orElse(0);
 
-		return new SensorDataAggregation((int) averageTemperature, (int) averageUsage, timestamp);
+		return new SensorDataAggregation((int) averageTemperature, (int) averageUsage, first, last);
 	}
 }

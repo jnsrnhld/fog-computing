@@ -1,7 +1,6 @@
 package com.fogcomputing;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -9,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MessageSender implements Runnable {
 
-	private static final int DEFAULT_BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
+	private static final int BATCH_SIZE = 15; // we send every 15 seconds, sensor data is written/collected every second
 
 	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
 	private final Client client;
@@ -23,18 +22,22 @@ public class MessageSender implements Runnable {
 	public void run() {
 		while (!Thread.currentThread().isInterrupted()) {
 
-			List<SensorData> batch = new ArrayList<>(DEFAULT_BATCH_SIZE);
-			while (messageBuffer.peek() != null) {
+			List<SensorData> batch = new ArrayList<>(BATCH_SIZE);
+			while (batch.size() < BATCH_SIZE && messageBuffer.peek() != null) {
 				SensorData sensorData = messageBuffer.poll();
 				batch.add(sensorData);
 			}
 
-			Timestamp currentDateTime = new Timestamp(System.currentTimeMillis());
-			SensorDataBatch sensorDataBatch = new SensorDataBatch(batch, currentDateTime);
+			// send 1-x batches until buffer is empty, than sleep for 15 seconds
+			// this results in sending a batch of 15 SensorData every 15 seconds if server is working properly
+			if (batch.isEmpty()) {
+				ThreadUtils.sleep(15, TimeUnit.SECONDS);
+				continue;
+			}
+
+			SensorDataBatch sensorDataBatch = SensorDataBatch.of(batch);
 			byte[] response = client.trySend(sensorDataBatch);
 			handleResponse(response);
-
-			ThreadUtils.sleep(15, TimeUnit.SECONDS);
 		}
 	}
 
