@@ -21,7 +21,7 @@ public class Server implements Runnable, Closeable {
 
 	@Override
 	public void run() {
-		server.bind("tcp://localhost:%s".formatted(port));
+		server.bind("tcp://*:%s".formatted(port));
 		System.out.printf("Server listening on port %s...%n", port);
 
 		while (!Thread.currentThread().isInterrupted()) {
