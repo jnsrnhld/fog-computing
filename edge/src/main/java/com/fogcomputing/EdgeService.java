@@ -16,6 +16,12 @@ public class EdgeService implements Callable<Void> {
 	@CommandLine.Parameters(index = "0", description = "Please provide a cloud server address", defaultValue = "localhost:8080")
 	private String cloudServerAddress;
 
+	@CommandLine.Parameters(index = "1", description = "Please provide a temperature sensor address", defaultValue = "*:5556")
+	private String temperatureSensorAddress;
+
+	@CommandLine.Parameters(index = "2", description = "Please provide a usage sensor address", defaultValue = "*:5555")
+	private String usageSensorAddress;
+
 	@Override
 	public Void call() throws Exception {
 
@@ -30,8 +36,8 @@ public class EdgeService implements Callable<Void> {
 		return null;
 	}
 
-	private static void startSensordataCollector(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
-		SensorDataCollector sensorDataCollector = new SensorDataCollector(messageBuffer);
+	private void startSensordataCollector(ConcurrentLinkedQueue<SensorData> messageBuffer, ExecutorService executor) {
+		SensorDataCollector sensorDataCollector = new SensorDataCollector(messageBuffer, temperatureSensorAddress, usageSensorAddress);
 		executor.submit(sensorDataCollector);
 	}
 

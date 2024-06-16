@@ -1,12 +1,39 @@
-version: '3.9'
 services:
-  usage-sensor:
+  usage:
     ports:
       - "5555:5555"
     build:
       context: ./sensors/usage
-  temperature-sensor:
+    networks:
+      - my_network
+
+  temperature:
     ports:
       - "5556:5556"
     build:
       context: ./sensors/temperature
+    networks:
+      - my_network
+      
+  edge:
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: edge.Dockerfile
+    command: 'cloud:8080 temperature:5556 usage:5555'
+    networks:
+      - my_network
+  
+  cloud:
+    ports:
+      - "8081:8081"
+    build:
+      context: .
+      dockerfile: cloud.Dockerfile
+    networks:
+      - my_network
+    
+networks:
+  my_network:
+    driver: bridge

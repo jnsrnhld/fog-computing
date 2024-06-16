@@ -11,17 +11,17 @@ import org.zeromq.ZMQ;
 @RequiredArgsConstructor
 public class SensorDataCollector implements Runnable {
 
-	private static final int USAGE_TOPIC_PORT = 5555;
-	private static final int TEMPERATURE_TOPIC_PORT = 5556;
 	private static final String USAGE_TOPIC = "USAGE";
 	private static final String TEMPERATURE_TOPIC = "TEMPERATURE";
 
 	private final ConcurrentLinkedQueue<SensorData> messageBuffer;
+	private final String temperatureSensorAdress;
+	private final String usageSensorAddress;
 
 	@Override
 	public void run() {
-		try (ZMQ.Socket usageSub = createSubscriber(USAGE_TOPIC_PORT, USAGE_TOPIC);
-			 ZMQ.Socket temperatureSub = createSubscriber(TEMPERATURE_TOPIC_PORT, TEMPERATURE_TOPIC);)
+		try (ZMQ.Socket usageSub = createSubscriber(USAGE_TOPIC);
+			 ZMQ.Socket temperatureSub = createSubscriber(TEMPERATURE_TOPIC);)
 		{
 			while (!Thread.currentThread().isInterrupted()) {
 				// we do sync read of both sensors
@@ -33,10 +33,16 @@ public class SensorDataCollector implements Runnable {
 		}
 	}
 
-	private static ZMQ.Socket createSubscriber(int port, String topic) {
+	private ZMQ.Socket createSubscriber(String topic) {
+		System.out.println(usageSensorAddress);
 		ZContext context = ZContextProvider.getInstance();
 		ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
-		subscriber.connect("tcp://*:%d".formatted(port));
+		if(topic  == USAGE_TOPIC) {
+			System.out.println(usageSensorAddress);
+			subscriber.connect("tcp://%s".formatted(usageSensorAddress));
+		} else {
+			subscriber.connect("tcp://%s".formatted(temperatureSensorAdress));
+		}
 		subscriber.subscribe(topic.getBytes());
 		return subscriber;
 	}
