@@ -2,14 +2,17 @@ from random import randrange
 import time
 import zmq
 import logging
+import os
 
 TOPIC = 'TEMPERATURE'
+
+PORT = os.getenv('PORT', '5556')
 
 logging.basicConfig(level = logging.INFO)
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://*:5556")
+socket.bind("tcp://*:%s" % PORT)
 
 while True: 
     data = randrange(80)

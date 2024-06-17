@@ -10,7 +10,19 @@ seconds.
 aggregated sensor data.
 - `common` for the shared code parts of the 2 other modules.
 
-# How to use
+# Quickstart Cloud
+
+Copy/clone the repository to your cloud machine and just run: `docker compose up cloud`.
+On your local machine, just run `docker compose up -d temperature usage edge`. Make sure to set replace the first 
+argument of the `edge` service command in the `docker-compose.yaml` with the proper address of the cloud service, for 
+example: `command: '34.32.53.149:8080 temperature:5556 usage:5555'`
+You may want to watch an individual service's logs via `docker logs -f $SERVICE_NAME`.
+
+# Quickstart Local
+
+`docker compose up` will start all services which will immediately start talking to each other.
+
+# How it works
 
 The [EdgeService](edge/src/main/java/com/fogcomputing/EdgeService.java) expects the cloud service to run on
 `localhost:8080` per default. This can be overwritten by passing an address of format `host:port` as first argument 
@@ -23,4 +35,5 @@ Cloud and edge service are resilient to outages of the respective other service 
 edge service will collect sensor data no matter if the cloud service is reachable. Usually, the edge service sends 
 a [SensorDataBatch](common/src/main/java/com/fogcomputing/SensorDataBatch.java) every 15 seconds containing 15
 [SensorData](common/src/main/java/com/fogcomputing/SensorData.java) data points. If the cloud service is not reachable,
-the amount of messages per batch will grow (up to infinity) until the cloud service is reachable again.
+the amount of messages per batch will grow in the buffer (until no memory is left). As soon as the cloud service is 
+reachable again, the Edge Service will send multiple batches in a row until the buffer is empty.

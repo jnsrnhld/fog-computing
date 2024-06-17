@@ -34,11 +34,9 @@ public class SensorDataCollector implements Runnable {
 	}
 
 	private ZMQ.Socket createSubscriber(String topic) {
-		System.out.println(usageSensorAddress);
 		ZContext context = ZContextProvider.getInstance();
 		ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
 		if(topic  == USAGE_TOPIC) {
-			System.out.println(usageSensorAddress);
 			subscriber.connect("tcp://%s".formatted(usageSensorAddress));
 		} else {
 			subscriber.connect("tcp://%s".formatted(temperatureSensorAdress));
